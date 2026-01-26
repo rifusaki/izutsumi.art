@@ -1,0 +1,15 @@
+---js
+const eleventyNavigation = {
+	key: "Fanart",
+	order: 2
+};
+---
+<h1>Fanart</h1>
+
+{% set gallerylist = [] %}
+{% for item in galleryByTag %}
+	{% if item.tagName == "fanart" %}
+		{% set gallerylist = item.images %}
+	{% endif %}
+{% endfor %}
+{% include "gallerylist.njk" %}

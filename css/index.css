@@ -57,7 +57,26 @@ html {
 	overflow-y: scroll;
 }
 body {
+	max-width: 100%;
+}
+
+header,
+footer,
+main {
 	max-width: 40em;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+heading-anchors {
+	display: block;
+}
+
+heading-anchors > .gallery-grid {
+	width: 80vw;
+	max-width: 80vw;
+	margin-left: 50%;
+	transform: translateX(-50%);
 }
 
 /* https://www.a11yproject.com/posts/how-to-hide-content/ */
@@ -296,3 +315,51 @@ header {
 	margin-right: 1em;
 }
 
+
+/* Gallery Grid */
+.gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+	gap: 1rem;
+	list-style: none;
+	padding: 0;
+}
+.gallery-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+.gallery-item img {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1 / 1;
+	object-fit: cover;
+	border-radius: 8px;
+	background-color: var(--color-gray-20);
+}
+.gallery-link {
+	display: block;
+	transition: opacity 0.2s;
+}
+.gallery-link:hover {
+	opacity: 0.9;
+}
+.item-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	font-size: 0.8rem;
+}
+.gallery-tags-nav {
+	margin-bottom: 2rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--color-gray-20);
+}
+.tag-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	list-style: none;
+	padding: 0;
+	margin-top: 0.5rem;
+}

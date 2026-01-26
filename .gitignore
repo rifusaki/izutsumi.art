@@ -1,3 +1,7 @@
 _site/
 node_modules/
 .cache
+
+.env
+_files/
+.DS_Store

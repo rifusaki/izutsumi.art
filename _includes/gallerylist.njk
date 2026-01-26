@@ -1,0 +1,16 @@
+<ul class="gallery-grid">
+{% for image in gallerylist %}
+	<li class="gallery-item">
+		<a href="{{ image.url }}" target="_blank" class="gallery-link">
+			{% r2Image image.url, image.description or "Gallery Image", "(min-width: 30em) 33vw, 100vw" %}
+		</a>
+		{% if image.tags.length > 0 %}
+		{# <div class="item-tags">
+            {% for tag in image.tags %}
+                <a href="/gallery/tags/{{ tag | slugify }}/" class="post-tag">{{ tag }}</a>
+            {% endfor %}
+		</div> #}
+		{% endif %}
+	</li>
+{% endfor %}
+</ul>

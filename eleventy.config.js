@@ -1,8 +1,12 @@
+import "dotenv/config";
 import { IdAttributePlugin, InputPathToUrlTransformPlugin, HtmlBasePlugin } from "@11ty/eleventy";
 import { feedPlugin } from "@11ty/eleventy-plugin-rss";
 import pluginSyntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import pluginNavigation from "@11ty/eleventy-navigation";
 import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
+import Image from "@11ty/eleventy-img";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getR2Client } from "./_utils/r2-gallery.js";
 
 import pluginFilters from "./_config/filters.js";
 
@@ -60,30 +64,30 @@ export default async function(eleventyConfig) {
 	eleventyConfig.addPlugin(HtmlBasePlugin);
 	eleventyConfig.addPlugin(InputPathToUrlTransformPlugin);
 
-	eleventyConfig.addPlugin(feedPlugin, {
-		type: "atom", // or "rss", "json"
-		outputPath: "/feed/feed.xml",
-		stylesheet: "pretty-atom-feed.xsl",
-		templateData: {
-			eleventyNavigation: {
-				key: "Feed",
-				order: 4
-			}
-		},
-		collection: {
-			name: "posts",
-			limit: 10,
-		},
-		metadata: {
-			language: "en",
-			title: "Blog Title",
-			subtitle: "This is a longer description about your blog.",
-			base: "https://example.com/",
-			author: {
-				name: "Your Name"
-			}
-		}
-	});
+	// eleventyConfig.addPlugin(feedPlugin, {
+	// 	type: "atom", // or "rss", "json"
+	// 	outputPath: "/feed/feed.xml",
+	// 	stylesheet: "pretty-atom-feed.xsl",
+	// 	templateData: {
+	// 		eleventyNavigation: {
+	// 			key: "Feed",
+	// 			order: 3
+	// 		}
+	// 	},
+	// 	collection: {
+	// 		name: "posts",
+	// 		limit: 10,
+	// 	},
+	// 	metadata: {
+	// 		language: "en",
+	// 		title: "Blog Title",
+	// 		subtitle: "This is a longer description about your blog.",
+	// 		base: "https://example.com/",
+	// 		author: {
+	// 			name: "Your Name"
+	// 		}
+	// 	}
+	// });
 
 	// Image optimization: https://www.11ty.dev/docs/plugins/image/#eleventy-transform
 	eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
@@ -124,6 +128,43 @@ export default async function(eleventyConfig) {
 	// If your passthrough copy gets heavy and cumbersome, add this line
 	// to emulate the file copy on the dev server. Learn more:
 	// https://www.11ty.dev/docs/copy/#emulate-passthrough-copy-during-serve
+
+	// Shortcode for R2 Gallery Images
+	eleventyConfig.addNunjucksAsyncShortcode("r2Image", async function(src, alt, sizes) {
+		// If src is empty or not string, return empty
+		if (!src || typeof src !== 'string') return "";
+
+		try {
+			// If using cached signed URLs (containing 'r2.cloudflarestorage.com'), 
+			// eleventy-img treats them as unique caching keys. 
+			
+			let imageOptions = {
+				widths: [300, 600, "auto"],
+				formats: ["auto"], // Use original format in bucket
+				urlPath: "/img/gallery/",
+				outputDir: "./_site/img/gallery/",
+				cacheOptions: {
+					duration: "1d",
+					directory: ".cache",
+					removeUrlQueryParams: false, // Important for Signed URLs to work
+				},
+			};
+
+			// If the Signed URL works, eleventy-img will download it.
+			let metadata = await Image(src, imageOptions);
+
+			let imageAttributes = {
+				alt,
+				sizes,
+				loading: "lazy",
+				decoding: "async",
+			};
+			return Image.generateHTML(metadata, imageAttributes);
+		} catch (e) {
+			console.error(`[r2Image] Error processing image:`, e.message);
+			return "";
+		}
+	});
 
 	// eleventyConfig.setServerPassthroughCopyBehavior("passthrough");
 };

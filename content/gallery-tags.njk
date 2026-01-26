@@ -1,0 +1,14 @@
+---
+pagination:
+  data: galleryByTag
+  size: 1
+  alias: tagData
+permalink: /gallery/tags/{{ tagData.tagName | slugify }}/
+layout: layouts/home.njk
+---
+<h1>Tag: {{ tagData.tagName }}</h1>
+
+{% set gallerylist = tagData.images %}
+{% include "gallerylist.njk" %}
+
+<p><a href="/">Back to all images</a></p>
