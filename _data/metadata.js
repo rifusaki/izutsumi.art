@@ -1,5 +1,5 @@
 export default {
-	title: "Izutsumi Art",
+	title: "Izutsumi",
 	url: "https://izutsumi.art/",
 	language: "en",
 	description: "an izutsumi gallery",

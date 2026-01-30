@@ -139,10 +139,13 @@ export default async function(eleventyConfig) {
 			// eleventy-img treats them as unique caching keys. 
 			
 			let imageOptions = {
-				widths: [300, 600, "auto"],
+				widths: [150, 300, 600, "auto"],
 				formats: ["auto"], // Use original format in bucket
 				urlPath: "/img/gallery/",
 				outputDir: "./_site/img/gallery/",
+                sharpOptions: {
+                    animated: true, // ensure animated GIFs are preserved
+                },
 				cacheOptions: {
 					duration: "1d",
 					directory: ".cache",
@@ -158,7 +161,8 @@ export default async function(eleventyConfig) {
 				sizes,
 				loading: "lazy",
 				decoding: "async",
-			};
+                "eleventy:ignore": "", // Prevent double-processing by the transform plugin
+            };
 			return Image.generateHTML(metadata, imageAttributes);
 		} catch (e) {
 			console.error(`[r2Image] Error processing image:`, e.message);

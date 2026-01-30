@@ -3,5 +3,5 @@ node_modules/
 .cache
 
 .env
-_files/
+_files*/
 .DS_Store
