@@ -93,8 +93,8 @@ export async function getGalleryImages() {
 				})
 			);
 
-			// Sort by date new to old
-			cachedImages.sort((a, b) => b.lastModified - a.lastModified);
+			// Sort randomly for gallery display
+			cachedImages.sort(() => Math.random() - 0.5);
 
 			console.log(`Loaded ${cachedImages.length} images from local source`);
 			return cachedImages;
@@ -170,8 +170,8 @@ export async function getGalleryImages() {
 				};
 			}));
 
-		// Sort by date new to old
-		cachedImages.sort((a, b) => b.lastModified - a.lastModified);
+		// Sort randomly for gallery display
+		cachedImages.sort(() => Math.random() - 0.5);
 
 		console.log(`Loaded ${cachedImages.length} images from R2`);
 		return cachedImages;
