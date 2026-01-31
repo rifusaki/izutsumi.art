@@ -8,6 +8,22 @@
 		<meta name="description" content="{{ description or metadata.description }}">
 		<link rel="alternate" href="/feed/feed.xml" type="application/atom+xml" title="{{ metadata.title }}">
 
+		<meta property="og:type" content="website">
+		<meta property="og:url" content="{{ metadata.url }}{{ page.url }}">
+		<meta property="og:title" content="{{ title or metadata.title }}">
+		<meta property="og:description" content="{{ description or metadata.description }}">
+		
+		{%- set ogImage = og_image or (image.url if image and image.url) -%}
+		{%- if ogImage -%}
+			{%- if ogImage.slice(0, 4) == "http" -%}
+				<meta property="og:image" content="{{ ogImage }}">
+			{%- else -%}
+				<meta property="og:image" content="{{ metadata.url }}{{ ogImage }}">
+			{%- endif -%}
+		{%- endif -%}
+
+
+
 		{#- Uncomment this if you’d like folks to know that you used Eleventy to build your site!  #}
 		{#- <meta name="generator" content="{{ eleventy.generator }}"> #}
 
