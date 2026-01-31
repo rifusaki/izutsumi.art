@@ -11,7 +11,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 Image.concurrency = 2;
 
 import { getR2Client } from "./_utils/r2-gallery.js";
-import faviconPlugin from "eleventy-favicon";
+// import faviconPlugin from "eleventy-favicon";
 
 import pluginFilters from "./_config/filters.js";
 
@@ -34,7 +34,8 @@ export default async function(eleventyConfig) {
 		.addPassthroughCopy({
 			"./public/": "/"
 		})
-		.addPassthroughCopy("./content/feed/pretty-atom-feed.xsl");
+		.addPassthroughCopy("./content/feed/pretty-atom-feed.xsl")
+		.addPassthroughCopy("favicon.png");
 
 	// Run Eleventy when these files change:
 	// https://www.11ty.dev/docs/watch-serve/#add-your-own-watch-targets
@@ -117,7 +118,7 @@ export default async function(eleventyConfig) {
 
 	// Filters
 	eleventyConfig.addPlugin(pluginFilters);
-	eleventyConfig.addPlugin(faviconPlugin);
+	// eleventyConfig.addPlugin(faviconPlugin);
 
 	eleventyConfig.addPlugin(IdAttributePlugin, {
 		// by default we use Eleventy’s built-in `slugify` filter:
