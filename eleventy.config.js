@@ -7,6 +7,7 @@ import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
 import Image from "@11ty/eleventy-img";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getR2Client } from "./_utils/r2-gallery.js";
+import faviconPlugin from "eleventy-favicon";
 
 import pluginFilters from "./_config/filters.js";
 
@@ -112,6 +113,7 @@ export default async function(eleventyConfig) {
 
 	// Filters
 	eleventyConfig.addPlugin(pluginFilters);
+	eleventyConfig.addPlugin(faviconPlugin);
 
 	eleventyConfig.addPlugin(IdAttributePlugin, {
 		// by default we use Eleventy’s built-in `slugify` filter:
