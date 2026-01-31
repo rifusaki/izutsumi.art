@@ -1,0 +1,73 @@
+---
+pagination:
+  data: gallery
+  size: 1
+  alias: image
+permalink: "/gallery/view/{{ image.key | slugify }}/"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ image.description or 'Gallery Image' }}"
+---
+
+<div class="gallery-single-container">
+  <nav class="gallery-nav top">
+    <a href="/gallery/">← Back to Gallery</a>
+  </nav>
+
+  <figure class="gallery-single-figure">
+    {# Display the image full-size (using 'auto' width or 100vw) #}
+    {% r2Image image.url, image.description or "Gallery Image", "100vw" %}
+    
+    <figcaption class="gallery-caption">
+      <h1>{{ image.description }}</h1>
+      
+      <div class="gallery-meta">
+        {% if image.labels %}
+          <div class="tags">
+            {% for tag in image.tags %}
+              <span class="tag">#{{ tag }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if image.credits %}
+          <p class="credits">Credits: {{ image.credits }}</p>
+        {% endif %}
+
+        <div class="actions">
+            {% if pagination.href.previous %}<a href="{{ pagination.href.previous }}" class="nav-prev">« Previous</a>{% endif %}
+            <a href="{{ image.url }}" download target="_blank" class="download-link">Download Original</a>
+            {% if pagination.href.next %}<a href="{{ pagination.href.next }}" class="nav-next">Next »</a>{% endif %}
+        </div>
+      </div>
+    </figcaption>
+  </figure>
+</div>
+
+<style>
+  .gallery-single-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  .gallery-single-figure img {
+    width: 100%;
+    height: auto;
+    max-height: 85vh;
+    object-fit: contain;
+    background: #00000010;
+    border-radius: 4px;
+  }
+  .gallery-nav { margin-bottom: 1rem; }
+  .gallery-caption { margin-top: 1rem; text-align: center; }
+  .gallery-meta { margin-top: 1rem; color: var(--text-color-secondary, #666); }
+  .actions { 
+    margin-top: 1.5rem; 
+    display: flex; 
+    gap: 1rem; 
+    justify-content: center; 
+    align-items: center;
+  }
+  .actions a { text-decoration: none; }
+  .nav-prev, .nav-next { font-weight: bold; }
+</style>
