@@ -6,6 +6,10 @@ import pluginNavigation from "@11ty/eleventy-navigation";
 import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
 import Image from "@11ty/eleventy-img";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
+
+// limit image processing concurrency to prevent memory crash
+Image.concurrency = 2;
+
 import { getR2Client } from "./_utils/r2-gallery.js";
 import faviconPlugin from "eleventy-favicon";
 
