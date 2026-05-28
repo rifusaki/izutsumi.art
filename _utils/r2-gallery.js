@@ -45,12 +45,11 @@ async function getLocalFiles(dir) {
  * before the file extension. e.g., "fanart/image.webp" → "fanart/image.150w.webp"
  */
 function getVariantKeys(key) {
-	const extIndex = key.lastIndexOf(".");
-	if (extIndex === -1) {
+	const ext = path.extname(key);
+	if (!ext) {
 		return { "150w": key, "300w": key, "600w": key, auto: key };
 	}
-	const base = key.slice(0, extIndex);
-	const ext = key.slice(extIndex);
+	const base = key.slice(0, -ext.length);
 	return {
 		"150w": `${base}.150w${ext}`,
 		"300w": `${base}.300w${ext}`,
@@ -67,7 +66,7 @@ async function resolveImageUrl(key, domain, s3, bucketName) {
 		const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
 		return await getSignedUrl(s3, command, { expiresIn: 3600 });
 	}
-	return `${domain}/${key}`;
+	return `${domain}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /**
@@ -124,8 +123,8 @@ export async function getGalleryImages() {
 					}
 					
 					const stat = await fs.stat(absolutePath);
-					
-				return {
+
+					return {
 					key: key,
 					url: absolutePath, // Pass absolute local path to eleventy-img
 					lastModified: stat.mtime,
