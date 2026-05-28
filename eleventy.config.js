@@ -4,13 +4,6 @@ import { feedPlugin } from "@11ty/eleventy-plugin-rss";
 import pluginSyntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import pluginNavigation from "@11ty/eleventy-navigation";
 import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
-import Image from "@11ty/eleventy-img";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-
-// limit image processing concurrency to prevent memory crash
-Image.concurrency = 2;
-
-import { getR2Client } from "./_utils/r2-gallery.js";
 // import faviconPlugin from "eleventy-favicon";
 
 import pluginFilters from "./_config/filters.js";
@@ -136,43 +129,26 @@ export default async function(eleventyConfig) {
 	// to emulate the file copy on the dev server. Learn more:
 	// https://www.11ty.dev/docs/copy/#emulate-passthrough-copy-during-serve
 
-	// Shortcode for R2 Gallery Images
-	eleventyConfig.addNunjucksAsyncShortcode("r2Image", async function(src, alt, sizes) {
-		// If src is empty or not string, return empty
-		if (!src || typeof src !== 'string') return "";
+	// Shortcode for R2 Gallery Images — uses <img srcset> for DPR-aware (Retina/HiDPI) selection
+	eleventyConfig.addNunjucksAsyncShortcode("r2Image", async function(image, alt, sizes) {
+		// Handle empty/missing image
+		if (!image || !image.srcset || !image.srcset.auto) return "";
 
 		try {
-			// If using cached signed URLs (containing 'r2.cloudflarestorage.com'), 
-			// eleventy-img treats them as unique caching keys. 
-			
-			let imageOptions = {
-				widths: [150, 300, 600, "auto"],
-				formats: ["auto"], // Use original format in bucket
-				urlPath: "/img/gallery/",
-				outputDir: "./_site/img/gallery/",
-                sharpOptions: {
-                    animated: true, // ensure animated GIFs are preserved
-                },
-				cacheOptions: {
-					duration: "1d",
-					directory: ".cache",
-					removeUrlQueryParams: false, // Important for Signed URLs to work
-				},
-			};
+			const srcset = image.srcset;
+			const autoSrc = srcset.auto;
 
-			// If the Signed URL works, eleventy-img will download it.
-			let metadata = await Image(src, imageOptions);
+			// Build srcset string from variants
+			const srcsetParts = ["150w", "300w", "600w"]
+				.filter(w => srcset[w])
+				.map(w => `${srcset[w]} ${w}`);
 
-			let imageAttributes = {
-				alt,
-				sizes,
-				loading: "lazy",
-				decoding: "async",
-                "eleventy:ignore": "", // Prevent double-processing by the transform plugin
-            };
-			return Image.generateHTML(metadata, imageAttributes);
+			// Add auto as fallback
+			const srcsetStr = srcsetParts.join(", ");
+
+			return `<img src="${autoSrc}" srcset="${srcsetStr}" sizes="${sizes || "100vw"}" alt="${alt || ""}" loading="lazy" decoding="async" width="auto" height="auto" eleventy:ignore>`;
 		} catch (e) {
-			console.error(`[r2Image] Error processing image:`, e.message);
+			console.error(`[r2Image] Error generating HTML:`, e.message);
 			return "";
 		}
 	});

@@ -16,13 +16,13 @@ eleventyComputed:
 
   <figure class="gallery-single-figure">
     {# Display the image full-size (using 'auto' width or 100vw) #}
-    {% r2Image image.url, image.description or "Gallery Image", "100vw" %}
+    {% r2Image image, image.description or "Gallery Image", "100vw" %}
     
     <figcaption class="gallery-caption">
       <h1>{{ image.description }}</h1>
       
       <div class="gallery-meta">
-        {% if image.labels %}
+        {% if image.tags.length > 0 %}
           <div class="tags">
             {% for tag in image.tags %}
               <span class="tag">#{{ tag }}</span>

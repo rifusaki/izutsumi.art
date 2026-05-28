@@ -40,6 +40,50 @@ async function getLocalFiles(dir) {
 	}
 }
 
+/**
+ * Derives R2 variant keys from an image key by inserting width markers
+ * before the file extension. e.g., "fanart/image.webp" → "fanart/image.150w.webp"
+ */
+function getVariantKeys(key) {
+	const extIndex = key.lastIndexOf(".");
+	if (extIndex === -1) {
+		return { "150w": key, "300w": key, "600w": key, auto: key };
+	}
+	const base = key.slice(0, extIndex);
+	const ext = key.slice(extIndex);
+	return {
+		"150w": `${base}.150w${ext}`,
+		"300w": `${base}.300w${ext}`,
+		"600w": `${base}.600w${ext}`,
+		auto: key,
+	};
+}
+
+/**
+ * Resolves a single image URL from R2 — either a public domain URL or a signed S3 URL.
+ */
+async function resolveImageUrl(key, domain, s3, bucketName) {
+	if (!domain || domain.includes("r2.cloudflarestorage.com")) {
+		const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
+		return await getSignedUrl(s3, command, { expiresIn: 3600 });
+	}
+	return `${domain}/${key}`;
+}
+
+/**
+ * Computes the srcset for an image key, resolving variant URLs in parallel.
+ */
+async function computeSrcset(key, domain, s3, bucketName) {
+	const variantKeys = getVariantKeys(key);
+	const entries = await Promise.all(
+		Object.entries(variantKeys).map(async ([width, variantKey]) => {
+			const url = await resolveImageUrl(variantKey, domain, s3, bucketName);
+			return [width, url];
+		})
+	);
+	return Object.fromEntries(entries);
+}
+
 export async function getGalleryImages() {
 	if (cachedImages) return cachedImages;
 
@@ -81,15 +125,21 @@ export async function getGalleryImages() {
 					
 					const stat = await fs.stat(absolutePath);
 					
-					return {
-						key: key,
-						url: absolutePath, // Pass absolute local path to eleventy-img
-						lastModified: stat.mtime,
-						size: stat.size,
-						tags: Array.from(tags),
-						description: (metadata[key] && metadata[key].description) || "",
-						credits: (metadata[key] && metadata[key].credits) || null
-					};
+				return {
+					key: key,
+					url: absolutePath, // Pass absolute local path to eleventy-img
+					lastModified: stat.mtime,
+					size: stat.size,
+					tags: Array.from(tags),
+					description: (metadata[key] && metadata[key].description) || "",
+					credits: (metadata[key] && metadata[key].credits) || null,
+					srcset: {
+						"150w": "",
+						"300w": "",
+						"600w": "",
+						auto: absolutePath,
+					},
+				};
 				})
 			);
 
@@ -134,7 +184,11 @@ export async function getGalleryImages() {
 
 		// Process images in parallel to resolve signed URLs
 		cachedImages = await Promise.all(allObjects
-			.filter(obj => /\.(jpg|jpeg|png|webp|avif|gif)$/i.test(obj.Key))
+			.filter(obj => {
+				const isImage = /\.(jpg|jpeg|png|webp|avif|gif)$/i.test(obj.Key);
+				const isVariant = /\.\d+w\.\w+$/i.test(obj.Key);
+				return isImage && !isVariant;
+			})
 			.map(async obj => {
 				const key = obj.Key;
 				const folder = path.dirname(key);
@@ -148,16 +202,8 @@ export async function getGalleryImages() {
 
 				// Generate signed URL if public domain fails or it is the private endpoint
 				const domain = publicDomain.replace(/\/$/, "");
-				let url = domain ? `${domain}/${key}` : key;
-				
-				if (!domain || domain.includes("r2.cloudflarestorage.com")) {
-					const command = new GetObjectCommand({
-						Bucket: bucketName,
-						Key: key,
-					});
-					// Signed URL valid for 1 hour
-					url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-				}
+				const url = await resolveImageUrl(key, domain, s3, bucketName);
+				const srcset = await computeSrcset(key, domain, s3, bucketName);
 
 				return {
 					key: key,
@@ -166,7 +212,8 @@ export async function getGalleryImages() {
 					size: obj.Size,
 					tags: Array.from(tags),
 					description: (metadata[key] && metadata[key].description) || "",
-					credits: (metadata[key] && metadata[key].credits) || null
+					credits: (metadata[key] && metadata[key].credits) || null,
+					srcset: srcset,
 				};
 			}));
 
