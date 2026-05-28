@@ -72,11 +72,12 @@ async function resolveImageUrl(key, domain, s3, bucketName) {
 /**
  * Computes the srcset for an image key, resolving variant URLs in parallel.
  */
-async function computeSrcset(key, domain, s3, bucketName) {
+async function computeSrcset(key, domain, s3, bucketName, existingKeys) {
 	const variantKeys = getVariantKeys(key);
 	const entries = await Promise.all(
 		Object.entries(variantKeys).map(async ([width, variantKey]) => {
-			const url = await resolveImageUrl(variantKey, domain, s3, bucketName);
+			const actualKey = existingKeys && existingKeys.has(variantKey) ? variantKey : key;
+			const url = await resolveImageUrl(actualKey, domain, s3, bucketName);
 			return [width, url];
 		})
 	);
@@ -181,6 +182,8 @@ export async function getGalleryImages() {
 			continuationToken = response.NextContinuationToken;
 		} while (continuationToken);
 
+		const existingKeys = new Set(allObjects.map(obj => obj.Key));
+
 		// Process images in parallel to resolve signed URLs
 		cachedImages = await Promise.all(allObjects
 			.filter(obj => {
@@ -202,7 +205,7 @@ export async function getGalleryImages() {
 				// Generate signed URL if public domain fails or it is the private endpoint
 				const domain = publicDomain.replace(/\/$/, "");
 				const url = await resolveImageUrl(key, domain, s3, bucketName);
-				const srcset = await computeSrcset(key, domain, s3, bucketName);
+				const srcset = await computeSrcset(key, domain, s3, bucketName, existingKeys);
 
 				return {
 					key: key,
